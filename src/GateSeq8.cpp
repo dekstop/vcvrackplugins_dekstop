@@ -182,10 +182,12 @@ struct ClockMultiplierChoice : ChoiceButton {
 		menu->box.pos = getAbsolutePos().plus(Vec(0, box.size.y));
 		menu->box.size.x = box.size.x;
 
-		const float multipliers[8] = {0.25, 0.3, 0.5, 0.75, 
-																	1.0, 1.5, 2.0, 3.0};
-		const std::string labels[8] = {"1/4", "1/3", "1/2", "3/4", 
-																	 "1/1", "3/2", "2/1", "3/1"};
+		const float multipliers[12] = {0.25, 0.3, 0.5, 0.75, 
+																	1.0, 1.5, 2.0, 3.0,
+																	4.0, 6.0, 8.0, 12.0};
+		const std::string labels[12] = {"1/4", "1/3", "1/2", "3/4", 
+																	 "1/1", "3/2", "2/1", "3/1",
+																 	 "4/1", "6/1", "8/1", "12/1"};
 		int multipliersLen = sizeof(multipliers) / sizeof(multipliers[0]);
 		for (int i = 0; i < multipliersLen; i++) {
 			ClockMultiplierItem *item = new ClockMultiplierItem();
