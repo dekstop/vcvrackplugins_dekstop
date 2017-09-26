@@ -19,3 +19,9 @@ struct GateSEQ8Widget : ModuleWidget {
 	json_t *toJsonData();
 	void fromJsonData(json_t *root);
 };
+
+struct RecorderWidget : ModuleWidget {
+	RecorderWidget();
+	json_t *toJsonData();
+	void fromJsonData(json_t *root);
+};
