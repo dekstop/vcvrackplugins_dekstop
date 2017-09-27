@@ -9,7 +9,7 @@ struct DekstopPlugin : Plugin {
 		name = "dekstop";
 		createModel<TriSEQ3Widget>(this, "TriSEQ3", "Tri-state SEQ-3");
 		createModel<GateSEQ8Widget>(this, "GateSEQ8", "Gate SEQ-8");
-		createModel<RecorderWidget>(this, "Recorder", "Recorder (experimental)");
+		createModel<RecorderWidget>(this, "Recorder", "Recorder");
 	}
 };
 

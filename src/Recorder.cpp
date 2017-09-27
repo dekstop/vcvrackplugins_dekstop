@@ -199,7 +199,7 @@ RecorderWidget::RecorderWidget() {
 	{
 		Label *label = new Label();
 		label->box.pos = Vec(xPos, yPos);
-		label->text = "Record";
+		label->text = "Recorder";
 		addChild(label);
 		yPos += labelHeight + margin;
 
