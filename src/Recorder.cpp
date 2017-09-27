@@ -164,13 +164,11 @@ struct RecordButton : LEDButton {
 	SchmittTrigger recordTrigger;
 	
 	void onChange() {
-		printf("onChange\n");
 		if (recordTrigger.process(value)) {
 			onPress();
 		}
 	}
 	void onPress() {
-		printf("onPress\n");
 		if (!recorder->isRecording) {
 			recorder->startRecording();
 		} else {
