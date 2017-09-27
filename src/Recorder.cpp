@@ -1,7 +1,12 @@
+#include <thread>
+
 #include "dekstop.hpp"
 #include "samplerate.h"
 #include "../ext/osdialog/osdialog.h"
 #include "write_wav.h"
+
+#define BLOCKSIZE 1024
+#define BUFFERSIZE 32*BLOCKSIZE
 
 struct Recorder : Module {
 	enum ParamIds {
@@ -21,7 +26,13 @@ struct Recorder : Module {
 	bool isRecording = false;
 	float recordingLight = 0.0;
 
+	std::mutex mutex;
+	std::thread thread;
+	RingBuffer<Frame<8>, BUFFERSIZE> buffer;
+	short writeBuffer[8*BUFFERSIZE];
+
 	Recorder();
+	~Recorder();
 	void step();
 	void clear();
 	void startRecording();
@@ -29,6 +40,7 @@ struct Recorder : Module {
 	void saveAsDialog();
 	void openWAV();
 	void closeWAV();
+	void recorderRun();
 };
 
 
@@ -36,6 +48,10 @@ Recorder::Recorder() {
 	params.resize(NUM_PARAMS);
 	inputs.resize(NUM_INPUTS);
 	outputs.resize(NUM_OUTPUTS);
+}
+
+Recorder::~Recorder() {
+	if (isRecording) stopRecording();
 }
 
 void Recorder::clear() {
@@ -47,14 +63,14 @@ void Recorder::startRecording() {
 	if (!filename.empty()) {
 		openWAV();
 		isRecording = true;
+		thread = std::thread(&Recorder::recorderRun, this);
 	}
 }
 
 void Recorder::stopRecording() {
-	if (isRecording) {
-		closeWAV();
-		isRecording = false;
-	}
+	isRecording = false;
+	thread.join();
+	closeWAV();
 }
 
 void Recorder::saveAsDialog() {
@@ -70,19 +86,20 @@ void Recorder::saveAsDialog() {
 
 void Recorder::openWAV() {
 	if (!filename.empty()) {
+		fprintf(stdout, "Recording to %s\n", filename.c_str());
 		int result = Audio_WAV_OpenWriter(&writer, filename.c_str(), gSampleRate, 8);
 		if (result < 0) {
+			isRecording = false;
 			char msg[100];
 			snprintf(msg, sizeof(msg), "Failed to open WAV file, result = %d\n", result);
 			osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, msg);
 			fprintf(stderr, msg);
-		} else {
-			isRecording = true;
-		}
+		} 
 	}
 }
 
 void Recorder::closeWAV() {
+	fprintf(stdout, "Stopping the recording.\n");
 	int result = Audio_WAV_CloseWriter(&writer);
 	if (result < 0) {
 		char msg[100];
@@ -93,27 +110,51 @@ void Recorder::closeWAV() {
 	isRecording = false;
 }
 
+// Run in a separate thread
+void Recorder::recorderRun() {
+	while (isRecording) {
+		// Wake up a few times a second, often enough to never overflow the buffer.
+		float sleepTime = (1.0 * BUFFERSIZE / gSampleRate) / 2.0;
+		std::this_thread::sleep_for(std::chrono::duration<float>(sleepTime));
+		if (buffer.full()) {
+			fprintf(stderr, "Recording buffer overflow. Can't write quickly enough to disk. Current buffer size: %d\n", BUFFERSIZE);
+		}
+		// Check if there is data
+		int numFrames = buffer.size();
+		if (numFrames > 0) {
+			// Convert float frames to shorts
+			{
+				std::lock_guard<std::mutex> lock(mutex); // Lock during conversion
+				src_float_to_short_array(static_cast<float*>(buffer.data[0].samples), writeBuffer, 8*numFrames);
+				buffer.start = 0;
+				buffer.end = 0;
+			}
+
+			fprintf(stdout, "Writing %d frames to disk\n", numFrames);
+			int result = Audio_WAV_WriteShorts(&writer, writeBuffer, 8*numFrames);
+			if (result < 0) {
+				stopRecording();
+
+				char msg[100];
+				snprintf(msg, sizeof(msg), "Failed to write WAV file, result = %d\n", result);
+				osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, msg);
+				fprintf(stderr, msg);
+			}
+		}
+	}
+}
+
 void Recorder::step() {
 	recordingLight = isRecording ? 1.0 : 0.0;
-
 	if (isRecording) {
-		// Read input samples
-		float indata[8];
-		short outdata[8];
-		for (int i = 0; i < 8; i++) {
-			indata[i] = getf(inputs[AUDIO1_INPUT + i]) / 5.0;
-		}
-		src_float_to_short_array(indata, outdata, 8);
-		// Write to file
-		// TODO: use a mutex; this writer might get closed at any time
-		int result = Audio_WAV_WriteShorts(&writer, outdata, 8);
-		if (result < 0) {
-			stopRecording();
-
-			char msg[100];
-			snprintf(msg, sizeof(msg), "Failed to write WAV file, result = %d\n", result);
-			// osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, msg);
-			fprintf(stderr, msg);
+		// Read input samples into recording buffer
+		std::lock_guard<std::mutex> lock(mutex);
+		if (!buffer.full()) {
+			Frame<8> f;
+			for (int i = 0; i < 8; i++) {
+				f.samples[i] = getf(inputs[AUDIO1_INPUT + i]) / 5.0;
+			}
+			buffer.push(f);
 		}
 	}
 }
@@ -125,11 +166,11 @@ struct RecordButton : LEDButton {
 	void onChange() {
 		printf("onChange\n");
 		if (recordTrigger.process(value)) {
-			onAction();
+			onPress();
 		}
 	}
-	void onAction() {
-		printf("onAction\n");
+	void onPress() {
+		printf("onPress\n");
 		if (!recorder->isRecording) {
 			recorder->startRecording();
 		} else {

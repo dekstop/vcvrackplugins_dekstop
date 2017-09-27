@@ -1,8 +1,9 @@
 
-SOURCES = $(wildcard src/*.cpp src/*.c)
+SOURCES = $(wildcard src/*.cpp portaudio/*.c)
 
 include ../../plugin.mk
 
+FLAGS += -Iportaudio
 
 dist: all
 	mkdir -p dist/dekstop
