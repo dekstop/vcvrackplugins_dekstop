@@ -45,7 +45,7 @@ struct TriSEQ3 : Module {
 	float rowLights[3] = {};
 	float gateLights[8] = {};
 
-	TriSEQ3();
+	TriSEQ3() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS) {}
 	void step();
 
 	json_t *toJson() {
@@ -83,16 +83,10 @@ struct TriSEQ3 : Module {
 };
 
 
-TriSEQ3::TriSEQ3() {
-	params.resize(NUM_PARAMS);
-	inputs.resize(NUM_INPUTS);
-	outputs.resize(NUM_OUTPUTS);
-}
-
 void TriSEQ3::step() {
 	const float lightLambda = 0.1;
 	// Run
-	if (runningTrigger.process(params[RUN_PARAM])) {
+	if (runningTrigger.process(params[RUN_PARAM].value)) {
 		running = !running;
 	}
 	runningLight = running ? 1.0 : 0.0;
@@ -100,16 +94,16 @@ void TriSEQ3::step() {
 	bool nextStep = false;
 
 	if (running) {
-		if (inputs[EXT_CLOCK_INPUT]) {
+		if (inputs[EXT_CLOCK_INPUT].active) {
 			// External clock
-			if (clockTrigger.process(*inputs[EXT_CLOCK_INPUT])) {
+			if (clockTrigger.process(inputs[EXT_CLOCK_INPUT].value)) {
 				phase = 0.0;
 				nextStep = true;
 			}
 		}
 		else {
 			// Internal clock
-			float clockTime = powf(2.0, params[CLOCK_PARAM] + getf(inputs[CLOCK_INPUT]));
+			float clockTime = powf(2.0, params[CLOCK_PARAM].value + inputs[CLOCK_INPUT].value);
 			phase += clockTime / gSampleRate;
 			if (phase >= 1.0) {
 				phase -= 1.0;
@@ -119,7 +113,7 @@ void TriSEQ3::step() {
 	}
 
 	// Reset
-	if (resetTrigger.process(params[RESET_PARAM] + getf(inputs[RESET_INPUT]))) {
+	if (resetTrigger.process(params[RESET_PARAM].value + inputs[RESET_INPUT].value)) {
 		phase = 0.0;
 		index = 999;
 		nextStep = true;
@@ -128,7 +122,7 @@ void TriSEQ3::step() {
 
 	if (nextStep) {
 		// Advance step
-		int numSteps = clampi(roundf(params[STEPS_PARAM] + getf(inputs[STEPS_INPUT])), 1, 8);
+		int numSteps = clampi(roundf(params[STEPS_PARAM].value + inputs[STEPS_INPUT].value), 1, 8);
 		index += 1;
 		if (index >= numSteps) {
 			index = 0;
@@ -140,24 +134,24 @@ void TriSEQ3::step() {
 
 	// Gate buttons
 	for (int i = 0; i < 8; i++) {
-		if (gateTriggers[i].process(params[GATE_PARAM + i])) {
+		if (gateTriggers[i].process(params[GATE_PARAM + i].value)) {
 			gateState[i] = !gateState[i];
 		}
 		float gate = (i == index && gateState[i] >= 1.0) ? 10.0 : 0.0;
-		setf(outputs[GATE_OUTPUT + i], gate);
+		outputs[GATE_OUTPUT + i].value = gate;
 		stepLights[i] -= stepLights[i] / lightLambda / gSampleRate;
 		gateLights[i] = (gateState[i] >= 1.0) ? 1.0 - stepLights[i] : stepLights[i];
 	}
 
 	// Rows
-	float row1 = params[ROW1_PARAM + index];
-	float row2 = params[ROW2_PARAM + index];
-	float row3 = params[ROW3_PARAM + index];
+	float row1 = params[ROW1_PARAM + index].value;
+	float row2 = params[ROW2_PARAM + index].value;
+	float row3 = params[ROW3_PARAM + index].value;
 	float gates = (gateState[index] >= 1.0) && !nextStep ? 10.0 : 0.0;
-	setf(outputs[ROW1_OUTPUT], row1);
-	setf(outputs[ROW2_OUTPUT], row2);
-	setf(outputs[ROW3_OUTPUT], row3);
-	setf(outputs[GATES_OUTPUT], gates);
+	outputs[ROW1_OUTPUT].value = row1;
+	outputs[ROW2_OUTPUT].value = row2;
+	outputs[ROW3_OUTPUT].value = row3;
+	outputs[GATES_OUTPUT].value = gates;
 	gatesLight = (gateState[index] >= 1.0) ? 1.0 : 0.0;
 	rowLights[0] = row1;
 	rowLights[1] = row2;

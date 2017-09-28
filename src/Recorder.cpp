@@ -31,7 +31,7 @@ struct Recorder : Module {
 	RingBuffer<Frame<8>, BUFFERSIZE> buffer;
 	short writeBuffer[8*BUFFERSIZE];
 
-	Recorder();
+	Recorder() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS) {}
 	~Recorder();
 	void step();
 	void clear();
@@ -43,12 +43,6 @@ struct Recorder : Module {
 	void recorderRun();
 };
 
-
-Recorder::Recorder() {
-	params.resize(NUM_PARAMS);
-	inputs.resize(NUM_INPUTS);
-	outputs.resize(NUM_OUTPUTS);
-}
 
 Recorder::~Recorder() {
 	if (isRecording) stopRecording();
@@ -152,7 +146,7 @@ void Recorder::step() {
 		if (!buffer.full()) {
 			Frame<8> f;
 			for (int i = 0; i < 8; i++) {
-				f.samples[i] = getf(inputs[AUDIO1_INPUT + i]) / 5.0;
+				f.samples[i] = inputs[AUDIO1_INPUT + i].value / 5.0;
 			}
 			buffer.push(f);
 		}

@@ -42,7 +42,7 @@ struct GateSEQ8 : Module {
 	float resetLight = 0.0;
 	float gateLights[NUM_GATES] = {};
 
-	GateSEQ8();
+	GateSEQ8() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS) {}
 	void step();
 
 	json_t *toJson() {
@@ -94,16 +94,10 @@ struct GateSEQ8 : Module {
 };
 
 
-GateSEQ8::GateSEQ8() {
-	params.resize(NUM_PARAMS);
-	inputs.resize(NUM_INPUTS);
-	outputs.resize(NUM_OUTPUTS);
-}
-
 void GateSEQ8::step() {
 	const float lightLambda = 0.1;
 	// Run
-	if (runningTrigger.process(params[RUN_PARAM])) {
+	if (runningTrigger.process(params[RUN_PARAM].value)) {
 		running = !running;
 	}
 	runningLight = running ? 1.0 : 0.0;
@@ -111,16 +105,16 @@ void GateSEQ8::step() {
 	bool nextStep = false;
 
 	if (running) {
-		if (inputs[EXT_CLOCK_INPUT]) {
+		if (inputs[EXT_CLOCK_INPUT].active) {
 			// External clock
-			if (clockTrigger.process(*inputs[EXT_CLOCK_INPUT])) {
+			if (clockTrigger.process(inputs[EXT_CLOCK_INPUT].value)) {
 				phase = 0.0;
 				nextStep = true;
 			}
 		}
 		else {
 			// Internal clock
-			float clockTime = powf(2.0, params[CLOCK_PARAM] + getf(inputs[CLOCK_INPUT]));
+			float clockTime = powf(2.0, params[CLOCK_PARAM].value + inputs[CLOCK_INPUT].value);
 			clockTime = clockTime * multiplier;
 			phase += clockTime / gSampleRate;
 			if (phase >= 1.0) {
@@ -131,7 +125,7 @@ void GateSEQ8::step() {
 	}
 
 	// Reset
-	if (resetTrigger.process(params[RESET_PARAM] + getf(inputs[RESET_INPUT]))) {
+	if (resetTrigger.process(params[RESET_PARAM].value + inputs[RESET_INPUT].value)) {
 		phase = 0.0;
 		index = 999;
 		nextStep = true;
@@ -140,7 +134,7 @@ void GateSEQ8::step() {
 
 	if (nextStep) {
 		// Advance step
-		int numSteps = clampi(roundf(params[STEPS_PARAM] + getf(inputs[STEPS_INPUT])), 1, NUM_STEPS);
+		int numSteps = clampi(roundf(params[STEPS_PARAM].value + inputs[STEPS_INPUT].value), 1, NUM_STEPS);
 		index += 1;
 		if (index >= numSteps) {
 			index = 0;
@@ -154,7 +148,7 @@ void GateSEQ8::step() {
 
 	// Gate buttons
 	for (int i = 0; i < NUM_GATES; i++) {
-		if (gateTriggers[i].process(params[GATE1_PARAM + i])) {
+		if (gateTriggers[i].process(params[GATE1_PARAM + i].value)) {
 			gateState[i] = !gateState[i];
 		}
 		stepLights[i] -= stepLights[i] / lightLambda / gSampleRate;
@@ -162,7 +156,7 @@ void GateSEQ8::step() {
 	}
 	for (int y = 0; y < NUM_CHANNELS; y++) {
 		float gate = (gateState[y*NUM_STEPS + index] >= 1.0) ? 10.0 : 0.0;
-		setf(outputs[GATE1_OUTPUT + y], gate);
+		outputs[GATE1_OUTPUT + y].value = gate;
 	}
 }
 
