@@ -1,4 +1,5 @@
 #include <thread>
+#include <atomic>
 
 #include "dekstop.hpp"
 #include "samplerate.h"
@@ -23,7 +24,7 @@ struct Recorder : Module {
 	
 	std::string filename;
 	WAV_Writer writer;
-	bool isRecording = false;
+	std::atomic_bool isRecording;
 	float recordingLight = 0.0;
 
 	std::mutex mutex;
@@ -31,7 +32,10 @@ struct Recorder : Module {
 	RingBuffer<Frame<8>, BUFFERSIZE> buffer;
 	short writeBuffer[8*BUFFERSIZE];
 
-	Recorder() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS) {}
+	Recorder() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS)
+	{
+		isRecording = false;
+	}
 	~Recorder();
 	void step();
 	void clear();
