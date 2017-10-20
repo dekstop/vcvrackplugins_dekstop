@@ -1,4 +1,5 @@
 #include "dekstop.hpp"
+#include "dsp/digital.hpp"
 
 struct TriSEQ3 : Module {
 	enum ParamIds {
@@ -69,7 +70,11 @@ struct TriSEQ3 : Module {
 		}
 	}
 
+#ifdef v_dev
+	void reset() {
+#else
 	void initialize() {
+#endif
 		for (int i = 0; i < 8; i++) {
 			gateState[i] = false;
 		}
@@ -84,6 +89,9 @@ struct TriSEQ3 : Module {
 
 
 void TriSEQ3::step() {
+#ifdef v_dev
+    float gSampleRate = engineGetSampleRate();
+#endif
 	const float lightLambda = 0.1;
 	// Run
 	if (runningTrigger.process(params[RUN_PARAM].value)) {
