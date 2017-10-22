@@ -1,4 +1,5 @@
 #include "dekstop.hpp"
+#include "../../../include/dsp/digital.hpp"
 
 struct TriSEQ3 : Module {
 	enum ParamIds {

@@ -4,6 +4,9 @@
 #include "samplerate.h"
 #include "../ext/osdialog/osdialog.h"
 #include "write_wav.h"
+#include "../../../include/dsp/ringbuffer.hpp"
+#include "../../../include/dsp/frame.hpp"
+#include "../../../include/dsp/digital.hpp"
 
 #define BLOCKSIZE 1024
 #define BUFFERSIZE 32*BLOCKSIZE
