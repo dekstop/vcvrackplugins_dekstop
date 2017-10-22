@@ -1,4 +1,5 @@
 #include "dekstop.hpp"
+#include "../../../include/dsp/digital.hpp"
 
 const int NUM_STEPS = 12;
 const int NUM_CHANNELS = 8;
