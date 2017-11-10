@@ -28,6 +28,14 @@ struct TriSEQ3 : Module {
 		GATE_OUTPUT,
 		NUM_OUTPUTS = GATE_OUTPUT + 8
 	};
+	enum LightIds {
+		RUNNING_LIGHT,
+		RESET_LIGHT,
+		GATES_LIGHT,
+		ROW_LIGHTS,
+		GATE_LIGHTS = ROW_LIGHTS + 3,
+		NUM_LIGHTS = GATE_LIGHTS + 8
+	};
 
 	bool running = true;
 	SchmittTrigger clockTrigger; // for external clock
@@ -39,14 +47,7 @@ struct TriSEQ3 : Module {
 	bool gateState[8] = {};
 	float stepLights[8] = {};
 
-	// Lights
-	float runningLight = 0.0;
-	float resetLight = 0.0;
-	float gatesLight = 0.0;
-	float rowLights[3] = {};
-	float gateLights[8] = {};
-
-	TriSEQ3() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS) {}
+	TriSEQ3() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
 	void step();
 
 	json_t *toJson() {
@@ -97,7 +98,7 @@ void TriSEQ3::step() {
 	if (runningTrigger.process(params[RUN_PARAM].value)) {
 		running = !running;
 	}
-	runningLight = running ? 1.0 : 0.0;
+	lights[RUNNING_LIGHT].value = running ? 1.0 : 0.0;
 
 	bool nextStep = false;
 
@@ -125,7 +126,7 @@ void TriSEQ3::step() {
 		phase = 0.0;
 		index = 999;
 		nextStep = true;
-		resetLight = 1.0;
+		lights[RESET_LIGHT].value = 1.0;
 	}
 
 	if (nextStep) {
@@ -138,7 +139,7 @@ void TriSEQ3::step() {
 		stepLights[index] = 1.0;
 	}
 
-	resetLight -= resetLight / lightLambda / gSampleRate;
+	lights[RESET_LIGHT].value -= lights[RESET_LIGHT].value / lightLambda / gSampleRate;
 
 	// Gate buttons
 	for (int i = 0; i < 8; i++) {
@@ -148,7 +149,7 @@ void TriSEQ3::step() {
 		float gate = (i == index && gateState[i] >= 1.0) ? 10.0 : 0.0;
 		outputs[GATE_OUTPUT + i].value = gate;
 		stepLights[i] -= stepLights[i] / lightLambda / gSampleRate;
-		gateLights[i] = (gateState[i] >= 1.0) ? 1.0 - stepLights[i] : stepLights[i];
+		lights[GATE_LIGHTS + i].value = (gateState[i] >= 1.0) ? 1.0 - stepLights[i] : stepLights[i];
 	}
 
 	// Rows
@@ -160,10 +161,10 @@ void TriSEQ3::step() {
 	outputs[ROW2_OUTPUT].value = row2;
 	outputs[ROW3_OUTPUT].value = row3;
 	outputs[GATES_OUTPUT].value = gates;
-	gatesLight = (gateState[index] >= 1.0) ? 1.0 : 0.0;
-	rowLights[0] = row1;
-	rowLights[1] = row2;
-	rowLights[2] = row3;
+	lights[GATES_LIGHT].value = (gateState[index] >= 1.0) ? 1.0 : 0.0;
+	lights[ROW_LIGHTS + 0].value = row1;
+	lights[ROW_LIGHTS + 1].value = row2;
+	lights[ROW_LIGHTS + 2].value = row3;
 }
 
 
@@ -173,9 +174,9 @@ TriSEQ3Widget::TriSEQ3Widget() {
 	box.size = Vec(15*22, 380);
 
 	{
-		Panel *panel = new LightPanel();
+		SVGPanel *panel = new SVGPanel();
 		panel->box.size = box.size;
-		panel->backgroundImage = Image::load("plugins/dekstop/res/TriSEQ3.png");
+		panel->setBackground(SVG::load(assetPlugin(plugin, "res/TriSEQ3.svg")));
 		addChild(panel);
 	}
 
@@ -184,16 +185,16 @@ TriSEQ3Widget::TriSEQ3Widget() {
 	addChild(createScrew<ScrewSilver>(Vec(15, 365)));
 	addChild(createScrew<ScrewSilver>(Vec(box.size.x-30, 365)));
 
-	addParam(createParam<Davies1900hSmallBlackKnob>(Vec(17, 56), module, TriSEQ3::CLOCK_PARAM, -2.0, 6.0, 2.0));
+	addParam(createParam<RoundSmallBlackKnob>(Vec(17, 56), module, TriSEQ3::CLOCK_PARAM, -2.0, 10.0, 2.0));
 	addParam(createParam<LEDButton>(Vec(60, 61-1), module, TriSEQ3::RUN_PARAM, 0.0, 1.0, 0.0));
-	addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(60+5, 61+4), &module->runningLight));
+	addChild(createLight<SmallLight<GreenLight>>(Vec(60+6, 61+5), module, TriSEQ3::RUNNING_LIGHT));
 	addParam(createParam<LEDButton>(Vec(98, 61-1), module, TriSEQ3::RESET_PARAM, 0.0, 1.0, 0.0));
-	addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(98+5, 61+4), &module->resetLight));
-	addParam(createParam<Davies1900hSmallBlackSnapKnob>(Vec(132, 56), module, TriSEQ3::STEPS_PARAM, 1.0, 8.0, 8.0));
-	addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(180.5, 65), &module->gatesLight));
-	addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(218.5, 65), &module->rowLights[0]));
-	addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(257, 65), &module->rowLights[1]));
-	addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(295.5, 65), &module->rowLights[2]));
+	addChild(createLight<SmallLight<GreenLight>>(Vec(98+6, 61+5), module, TriSEQ3::RESET_LIGHT));
+	addParam(createParam<RoundSmallBlackSnapKnob>(Vec(132, 56), module, TriSEQ3::STEPS_PARAM, 1.0, 8.0, 8.0));
+	addChild(createLight<SmallLight<GreenLight>>(Vec(181.5, 66), module, TriSEQ3::GATES_LIGHT));
+	addChild(createLight<SmallLight<GreenLight>>(Vec(219.5, 66), module, TriSEQ3::ROW_LIGHTS + 0));
+	addChild(createLight<SmallLight<GreenLight>>(Vec(258, 66), module, TriSEQ3::ROW_LIGHTS + 1));
+	addChild(createLight<SmallLight<GreenLight>>(Vec(296.5, 66), module, TriSEQ3::ROW_LIGHTS + 2));
 
 	static const float portX[8] = {19, 57, 96, 134, 173, 211, 250, 288};
 	addInput(createInput<PJ301MPort>(Vec(portX[0]-1, 99-1), module, TriSEQ3::CLOCK_INPUT));
@@ -206,11 +207,11 @@ TriSEQ3Widget::TriSEQ3Widget() {
 	addOutput(createOutput<PJ301MPort>(Vec(portX[7]-1, 99-1), module, TriSEQ3::ROW3_OUTPUT));
 
 	for (int i = 0; i < 8; i++) {
-		addParam(createParam<NKK>(Vec(portX[i]-2, 152), module, TriSEQ3::ROW1_PARAM + i, 0.0, 2.0, 0.0));
-		addParam(createParam<NKK>(Vec(portX[i]-2, 190), module, TriSEQ3::ROW2_PARAM + i, 0.0, 2.0, 0.0));
-		addParam(createParam<NKK>(Vec(portX[i]-2, 229), module, TriSEQ3::ROW3_PARAM + i, 0.0, 2.0, 0.0));
+		addParam(createParam<NKK>(Vec(portX[i]-3, 152), module, TriSEQ3::ROW1_PARAM + i, 0.0, 2.0, 0.0));
+		addParam(createParam<NKK>(Vec(portX[i]-3, 190), module, TriSEQ3::ROW2_PARAM + i, 0.0, 2.0, 0.0));
+		addParam(createParam<NKK>(Vec(portX[i]-3, 229), module, TriSEQ3::ROW3_PARAM + i, 0.0, 2.0, 0.0));
 		addParam(createParam<LEDButton>(Vec(portX[i]+2, 278-1), module, TriSEQ3::GATE_PARAM + i, 0.0, 1.0, 0.0));
-		addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(portX[i]+7, 278+4), &module->gateLights[i]));
+		addChild(createLight<SmallLight<GreenLight>>(Vec(portX[i]+8, 278+5), module, TriSEQ3::GATE_LIGHTS + i));
 		addOutput(createOutput<PJ301MPort>(Vec(portX[i]-1, 308-1), module, TriSEQ3::GATE_OUTPUT + i));
 	}
 }

@@ -26,6 +26,12 @@ struct GateSEQ8 : Module {
 		GATE1_OUTPUT,
 		NUM_OUTPUTS = GATE1_OUTPUT + NUM_CHANNELS
 	};
+	enum LightIds {
+		RUNNING_LIGHT,
+		RESET_LIGHT,
+		GATE_LIGHTS,
+		NUM_LIGHTS = GATE_LIGHTS + NUM_GATES
+	};
 
 	bool running = true;
 	SchmittTrigger clockTrigger; // for external clock
@@ -38,12 +44,7 @@ struct GateSEQ8 : Module {
 	bool gateState[NUM_GATES] = {};
 	float stepLights[NUM_GATES] = {};
 
-	// Lights
-	float runningLight = 0.0;
-	float resetLight = 0.0;
-	float gateLights[NUM_GATES] = {};
-
-	GateSEQ8() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS) {}
+	GateSEQ8() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
 	void step();
 
 	json_t *toJson() {
@@ -104,7 +105,7 @@ void GateSEQ8::step() {
 	if (runningTrigger.process(params[RUN_PARAM].value)) {
 		running = !running;
 	}
-	runningLight = running ? 1.0 : 0.0;
+	lights[RUNNING_LIGHT].value = running ? 1.0 : 0.0;
 
 	bool nextStep = false;
 
@@ -133,7 +134,7 @@ void GateSEQ8::step() {
 		phase = 0.0;
 		index = 999;
 		nextStep = true;
-		resetLight = 1.0;
+		lights[RESET_LIGHT].value = 1.0;
 	}
 
 	if (nextStep) {
@@ -148,7 +149,7 @@ void GateSEQ8::step() {
 		}
 	}
 
-	resetLight -= resetLight / lightLambda / gSampleRate;
+	lights[RESET_LIGHT].value -= lights[RESET_LIGHT].value / lightLambda / gSampleRate;
 
 	// Gate buttons
 	for (int i = 0; i < NUM_GATES; i++) {
@@ -156,7 +157,7 @@ void GateSEQ8::step() {
 			gateState[i] = !gateState[i];
 		}
 		stepLights[i] -= stepLights[i] / lightLambda / gSampleRate;
-		gateLights[i] = (gateState[i] >= 1.0) ? 1.0 - stepLights[i] : stepLights[i];
+		lights[GATE_LIGHTS + i].value = (gateState[i] >= 1.0) ? 1.0 - stepLights[i] : stepLights[i];
 	}
 	for (int y = 0; y < NUM_CHANNELS; y++) {
 		float gate = (gateState[y*NUM_STEPS + index] >= 1.0) ? 10.0 : 0.0;
@@ -168,16 +169,16 @@ void GateSEQ8::step() {
 struct ClockMultiplierItem : MenuItem {
 	GateSEQ8 *gateSEQ8;
 	float multiplier;
-	void onAction() {
+	void onAction(EventAction &e) override {
 		gateSEQ8->multiplier = multiplier;
 	}
 };
 
 struct ClockMultiplierChoice : ChoiceButton {
 	GateSEQ8 *gateSEQ8;
-	void onAction() {
+	void onAction(EventAction &e) override {
 		Menu *menu = gScene->createMenu();
-		menu->box.pos = getAbsolutePos().plus(Vec(0, box.size.y));
+		menu->box.pos = getAbsoluteOffset(Vec(0, box.size.y));
 		menu->box.size.x = box.size.x;
 
 		const float multipliers[12] = {0.25, 0.3, 0.5, 0.75, 
@@ -195,7 +196,7 @@ struct ClockMultiplierChoice : ChoiceButton {
 			menu->pushChild(item);
 		}
 	}
-	void step() {
+	void step() override {
 		this->text = stringf("%.2f", gateSEQ8->multiplier);
 	}
 };
@@ -206,9 +207,9 @@ GateSEQ8Widget::GateSEQ8Widget() {
 	box.size = Vec(360, 380);
 
 	{
-		Panel *panel = new LightPanel();
+		SVGPanel *panel = new SVGPanel();
 		panel->box.size = box.size;
-		panel->backgroundImage = Image::load("plugins/dekstop/res/GateSEQ8.png");
+		panel->setBackground(SVG::load(assetPlugin(plugin, "res/GateSEQ8.svg")));
 		addChild(panel);
 	}
 
@@ -217,12 +218,12 @@ GateSEQ8Widget::GateSEQ8Widget() {
 	addChild(createScrew<ScrewSilver>(Vec(15, 365)));
 	addChild(createScrew<ScrewSilver>(Vec(box.size.x-30, 365)));
 
-	addParam(createParam<Davies1900hSmallBlackKnob>(Vec(17, 56), module, GateSEQ8::CLOCK_PARAM, -2.0, 6.0, 2.0));
+	addParam(createParam<RoundSmallBlackKnob>(Vec(17, 56), module, GateSEQ8::CLOCK_PARAM, -2.0, 10.0, 2.0));
 	addParam(createParam<LEDButton>(Vec(60, 61-1), module, GateSEQ8::RUN_PARAM, 0.0, 1.0, 0.0));
-	addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(60+5, 61+4), &module->runningLight));
+	addChild(createLight<SmallLight<GreenLight>>(Vec(60+6, 61+5), module, GateSEQ8::RUNNING_LIGHT));
 	addParam(createParam<LEDButton>(Vec(98, 61-1), module, GateSEQ8::RESET_PARAM, 0.0, 1.0, 0.0));
-	addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(98+5, 61+4), &module->resetLight));
-	addParam(createParam<Davies1900hSmallBlackSnapKnob>(Vec(132, 56), module, GateSEQ8::STEPS_PARAM, 1.0, NUM_STEPS, NUM_STEPS));
+	addChild(createLight<SmallLight<GreenLight>>(Vec(98+6, 61+5), module, GateSEQ8::RESET_LIGHT));
+	addParam(createParam<RoundSmallBlackSnapKnob>(Vec(132, 56), module, GateSEQ8::STEPS_PARAM, 1.0, NUM_STEPS, NUM_STEPS));
 
 	static const float portX[8] = {19, 57, 96, 134, 173, 211, 250, 288};
 	addInput(createInput<PJ301MPort>(Vec(portX[0]-1, 99-1), module, GateSEQ8::CLOCK_INPUT));
@@ -247,7 +248,7 @@ GateSEQ8Widget::GateSEQ8Widget() {
 		for (int x = 0; x < NUM_STEPS; x++) {
 			int i = y*NUM_STEPS+x;
 			addParam(createParam<LEDButton>(Vec(22 + x*25, 155+y*25+3), module, GateSEQ8::GATE1_PARAM + i, 0.0, 1.0, 0.0));
-			addChild(createValueLight<SmallLight<GreenValueLight>>(Vec(27 + x*25, 155+y*25+8), &module->gateLights[i]));
+			addChild(createLight<SmallLight<GreenLight>>(Vec(28 + x*25, 156+y*25+8), module, GateSEQ8::GATE_LIGHTS + i));
 		}
 		addOutput(createOutput<PJ301MPort>(Vec(320, 155+y*25), module, GateSEQ8::GATE1_OUTPUT + y));
 	}

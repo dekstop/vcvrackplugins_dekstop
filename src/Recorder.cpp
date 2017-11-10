@@ -26,18 +26,21 @@ struct Recorder : Module {
 	enum OutputIds {
 		NUM_OUTPUTS
 	};
+	enum LightIds {
+		RECORDING_LIGHT,
+		NUM_LIGHTS
+	};
 	
 	std::string filename;
 	WAV_Writer writer;
 	std::atomic_bool isRecording;
-	float recordingLight = 0.0;
 
 	std::mutex mutex;
 	std::thread thread;
 	RingBuffer<Frame<ChannelCount>, BUFFERSIZE> buffer;
 	short writeBuffer[ChannelCount*BUFFERSIZE];
 
-	Recorder() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS)
+	Recorder() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS)
 	{
 		isRecording = false;
 	}
@@ -162,7 +165,7 @@ void Recorder<ChannelCount>::recorderRun() {
 
 template <unsigned int ChannelCount>
 void Recorder<ChannelCount>::step() {
-	recordingLight = isRecording ? 1.0 : 0.0;
+	lights[RECORDING_LIGHT].value = isRecording ? 1.0 : 0.0;
 	if (isRecording) {
 		// Read input samples into recording buffer
 		std::lock_guard<std::mutex> lock(mutex);
@@ -182,14 +185,13 @@ struct RecordButton : LEDButton {
 	Callback onPressCallback;
 	SchmittTrigger recordTrigger;
 	
-	void onChange() {
+	void onChange(EventChange &e) override {
 		if (recordTrigger.process(value)) {
-			onPress();
+			onPress(e);
 		}
 	}
-	void onPress() {
+	void onPress(EventChange &e) {
 		assert (onPressCallback);
-
 		onPressCallback();
 	}
 };
@@ -234,7 +236,7 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 			}
 		};
 		addParam(recordButton);
-		addChild(createValueLight<SmallLight<RedValueLight>>(Vec(xPos+5, yPos+4), &module->recordingLight));
+		addChild(createLight<SmallLight<RedLight>>(Vec(xPos+6, yPos+5), module, Recorder<ChannelCount>::RECORDING_LIGHT));
 		xPos = margin;
 		yPos += recordButton->box.size.y + 3*margin;
 	}
