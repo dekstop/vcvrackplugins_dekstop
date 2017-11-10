@@ -1,4 +1,5 @@
 #include "dekstop.hpp"
+#include "dsp/digital.hpp"
 
 const int NUM_STEPS = 12;
 const int NUM_CHANNELS = 8;
@@ -80,7 +81,7 @@ struct GateSEQ8 : Module {
 		}
 	}
 
-	void initialize() {
+	void reset() {
 		for (int i = 0; i < NUM_GATES; i++) {
 			gateState[i] = false;
 		}
@@ -95,6 +96,9 @@ struct GateSEQ8 : Module {
 
 
 void GateSEQ8::step() {
+#ifdef v_dev
+    float gSampleRate = engineGetSampleRate();
+#endif
 	const float lightLambda = 0.1;
 	// Run
 	if (runningTrigger.process(params[RUN_PARAM].value)) {

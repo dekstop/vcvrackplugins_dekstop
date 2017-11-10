@@ -6,6 +6,9 @@
 #include "samplerate.h"
 #include "../ext/osdialog/osdialog.h"
 #include "write_wav.h"
+#include "dsp/digital.hpp"
+#include "dsp/ringbuffer.hpp"
+#include "dsp/frame.hpp"
 
 #define BLOCKSIZE 1024
 #define BUFFERSIZE 32*BLOCKSIZE
@@ -90,6 +93,9 @@ void Recorder<ChannelCount>::saveAsDialog() {
 
 template <unsigned int ChannelCount>
 void Recorder<ChannelCount>::openWAV() {
+	#ifdef v_050_dev
+	float gSampleRate = engineGetSampleRate();
+	#endif
 	if (!filename.empty()) {
 		fprintf(stdout, "Recording to %s\n", filename.c_str());
 		int result = Audio_WAV_OpenWriter(&writer, filename.c_str(), gSampleRate, ChannelCount);
@@ -119,6 +125,9 @@ void Recorder<ChannelCount>::closeWAV() {
 // Run in a separate thread
 template <unsigned int ChannelCount>
 void Recorder<ChannelCount>::recorderRun() {
+	#ifdef v_050_dev
+	float gSampleRate = engineGetSampleRate();
+	#endif
 	while (isRecording) {
 		// Wake up a few times a second, often enough to never overflow the buffer.
 		float sleepTime = (1.0 * BUFFERSIZE / gSampleRate) / 2.0;
