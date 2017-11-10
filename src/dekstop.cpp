@@ -1,6 +1,5 @@
 #include "dekstop.hpp"
 #include <math.h>
-#include "dsp.hpp"
 
 Plugin *plugin;
 
