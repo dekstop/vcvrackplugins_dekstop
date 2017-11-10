@@ -104,7 +104,7 @@ void Recorder<ChannelCount>::openWAV() {
 			char msg[100];
 			snprintf(msg, sizeof(msg), "Failed to open WAV file, result = %d\n", result);
 			osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, msg);
-			fprintf(stderr, msg);
+			fprintf(stderr, "%s", msg);
 		} 
 	}
 }
@@ -117,7 +117,7 @@ void Recorder<ChannelCount>::closeWAV() {
 		char msg[100];
 		snprintf(msg, sizeof(msg), "Failed to close WAV file, result = %d\n", result);
 		osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, msg);
-		fprintf(stderr, msg);
+		fprintf(stderr, "%s", msg);
 	}
 	isRecording = false;
 }
@@ -154,7 +154,7 @@ void Recorder<ChannelCount>::recorderRun() {
 				char msg[100];
 				snprintf(msg, sizeof(msg), "Failed to write WAV file, result = %d\n", result);
 				osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, msg);
-				fprintf(stderr, msg);
+				fprintf(stderr, "%s", msg);
 			}
 		}
 	}

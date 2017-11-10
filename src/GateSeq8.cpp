@@ -96,9 +96,9 @@ struct GateSEQ8 : Module {
 
 
 void GateSEQ8::step() {
-#ifdef v_dev
-    float gSampleRate = engineGetSampleRate();
-#endif
+	#ifdef v_050_dev
+	float gSampleRate = engineGetSampleRate();
+	#endif
 	const float lightLambda = 0.1;
 	// Run
 	if (runningTrigger.process(params[RUN_PARAM].value)) {

@@ -70,7 +70,7 @@ struct TriSEQ3 : Module {
 		}
 	}
 
-#ifdef v_dev
+#ifdef v_050_dev
 	void reset() {
 #else
 	void initialize() {
@@ -89,9 +89,9 @@ struct TriSEQ3 : Module {
 
 
 void TriSEQ3::step() {
-#ifdef v_dev
-    float gSampleRate = engineGetSampleRate();
-#endif
+	#ifdef v_050_dev
+	float gSampleRate = engineGetSampleRate();
+	#endif
 	const float lightLambda = 0.1;
 	// Run
 	if (runningTrigger.process(params[RUN_PARAM].value)) {
