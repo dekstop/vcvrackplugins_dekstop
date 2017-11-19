@@ -193,7 +193,7 @@ struct ClockMultiplierChoice : ChoiceButton {
 			item->gateSEQ8 = gateSEQ8;
 			item->multiplier = multipliers[i];
 			item->text = stringf("%.2f (%s)", multipliers[i], labels[i].c_str());
-			menu->pushChild(item);
+			menu->addChild(item);
 		}
 	}
 	void step() override {

@@ -171,7 +171,7 @@ void Recorder<ChannelCount>::step() {
 		std::lock_guard<std::mutex> lock(mutex);
 		if (!buffer.full()) {
 			Frame<ChannelCount> f;
-			for (int i = 0; i < ChannelCount; i++) {
+			for (unsigned int i = 0; i < ChannelCount; i++) {
 				f.samples[i] = inputs[AUDIO1_INPUT + i].value / 5.0;
 			}
 			buffer.push(f);
@@ -251,7 +251,7 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 
 	yPos += 5;
 	xPos = 10;
-	for (int i = 0; i < ChannelCount; i++) {
+	for (unsigned int i = 0; i < ChannelCount; i++) {
 		addInput(createInput<PJ3410Port>(Vec(xPos, yPos), module, i));
 		Label *label = new Label();
 		label->box.pos = Vec(xPos + 4, yPos + 28);
