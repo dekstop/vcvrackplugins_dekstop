@@ -4,7 +4,7 @@ Martin Dittus (@dekstop), 2017
 
 ## Recorder
 
-A 2-channel and 8-channel recorder module that writes input multichannel WAV files. Press the record button to activate. In contrast to external recording options, it deals very well with audio stutter caused by high CPU load.
+2-channel and 8-channel recorder modules that write input multichannel WAV files. Press the record button to activate. In contrast to external recording options, they deal very well with audio stutter caused by high CPU load.
 
 ![Recorder-2 screenshot](https://github.com/dekstop/vcvrackplugins_dekstop/blob/master/screenshots/Recorder2.png)
 ![Recorder-8 screenshot](https://github.com/dekstop/vcvrackplugins_dekstop/blob/master/screenshots/Recorder8.png)
