@@ -96,9 +96,7 @@ void Recorder<ChannelCount>::saveAsDialog() {
 
 template <unsigned int ChannelCount>
 void Recorder<ChannelCount>::openWAV() {
-	#ifdef v_050_dev
 	float gSampleRate = engineGetSampleRate();
-	#endif
 	if (!filename.empty()) {
 		fprintf(stdout, "Recording to %s\n", filename.c_str());
 		int result = Audio_WAV_OpenWriter(&writer, filename.c_str(), gSampleRate, ChannelCount);
@@ -128,9 +126,7 @@ void Recorder<ChannelCount>::closeWAV() {
 // Run in a separate thread
 template <unsigned int ChannelCount>
 void Recorder<ChannelCount>::recorderRun() {
-	#ifdef v_050_dev
 	float gSampleRate = engineGetSampleRate();
-	#endif
 	while (isRecording) {
 		// Wake up a few times a second, often enough to never overflow the buffer.
 		float sleepTime = (1.0 * BUFFERSIZE / gSampleRate) / 2.0;
@@ -196,6 +192,13 @@ struct RecordButton : LEDButton {
 	}
 };
 
+template <unsigned int ChannelCount>
+struct RecorderWidget : ModuleWidget {
+	RecorderWidget();
+	json_t *toJsonData();
+	void fromJsonData(json_t *root);
+};
+
 
 template <unsigned int ChannelCount>
 RecorderWidget<ChannelCount>::RecorderWidget() {
@@ -252,7 +255,7 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 	yPos += 5;
 	xPos = 10;
 	for (unsigned int i = 0; i < ChannelCount; i++) {
-		addInput(createInput<PJ3410Port>(Vec(xPos, yPos), module, i));
+		addInput(Port::create<PJ3410Port>(Vec(xPos, yPos), Port::INPUT, module, i));
 		Label *label = new Label();
 		label->box.pos = Vec(xPos + 4, yPos + 28);
 		label->text = stringf("%d", i + 1);
@@ -267,12 +270,5 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 	}
 }
 
-Recorder2Widget::Recorder2Widget() :
-	RecorderWidget<2u>()
-{
-}
-
-Recorder8Widget::Recorder8Widget() :
-	RecorderWidget<8u>()
-{
-}
+Model *modelRecord2 = Model::create<Recorder2, Recorder2Widget>("dekstop", "Recorder2", "Recorder 2", UTILITY_TAG);
+Model *modelRecord8 = Model::create<Recorder8, Recorder8Widget>("dekstop", "Recorder8", "Recorder 8", UTILITY_TAG);

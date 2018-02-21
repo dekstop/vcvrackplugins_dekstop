@@ -71,11 +71,7 @@ struct TriSEQ3 : Module {
 		}
 	}
 
-#ifdef v_050_dev
 	void reset() {
-#else
-	void initialize() {
-#endif
 		for (int i = 0; i < 8; i++) {
 			gateState[i] = false;
 		}
@@ -83,16 +79,14 @@ struct TriSEQ3 : Module {
 
 	void randomize() {
 		for (int i = 0; i < 8; i++) {
-			gateState[i] = (randomf() > 0.5);
+			gateState[i] = (random() > 0.5);
 		}
 	}
 };
 
 
 void TriSEQ3::step() {
-	#ifdef v_050_dev
 	float gSampleRate = engineGetSampleRate();
-	#endif
 	const float lightLambda = 0.1;
 	// Run
 	if (runningTrigger.process(params[RUN_PARAM].value)) {
@@ -131,7 +125,7 @@ void TriSEQ3::step() {
 
 	if (nextStep) {
 		// Advance step
-		int numSteps = clampi(roundf(params[STEPS_PARAM].value + inputs[STEPS_INPUT].value), 1, 8);
+		int numSteps = clamp(static_cast<int>(roundf(params[STEPS_PARAM].value + inputs[STEPS_INPUT].value)), 1, 8);
 		index += 1;
 		if (index >= numSteps) {
 			index = 0;
@@ -167,10 +161,12 @@ void TriSEQ3::step() {
 	lights[ROW_LIGHTS + 2].value = row3;
 }
 
+struct TriSEQ3Widget : ModuleWidget {
+	TriSEQ3Widget(TriSEQ3 *module);
+};
 
-TriSEQ3Widget::TriSEQ3Widget() {
-	TriSEQ3 *module = new TriSEQ3();
-	setModule(module);
+
+TriSEQ3Widget::TriSEQ3Widget(TriSEQ3 *module) : ModuleWidget(module) {
 	box.size = Vec(15*22, 380);
 
 	{
@@ -197,14 +193,15 @@ TriSEQ3Widget::TriSEQ3Widget() {
 	addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(296.5, 66), module, TriSEQ3::ROW_LIGHTS + 2));
 
 	static const float portX[8] = {19, 57, 96, 134, 173, 211, 250, 288};
-	addInput(createInput<PJ301MPort>(Vec(portX[0]-1, 99-1), module, TriSEQ3::CLOCK_INPUT));
-	addInput(createInput<PJ301MPort>(Vec(portX[1]-1, 99-1), module, TriSEQ3::EXT_CLOCK_INPUT));
-	addInput(createInput<PJ301MPort>(Vec(portX[2]-1, 99-1), module, TriSEQ3::RESET_INPUT));
-	addInput(createInput<PJ301MPort>(Vec(portX[3]-1, 99-1), module, TriSEQ3::STEPS_INPUT));
-	addOutput(createOutput<PJ301MPort>(Vec(portX[4]-1, 99-1), module, TriSEQ3::GATES_OUTPUT));
-	addOutput(createOutput<PJ301MPort>(Vec(portX[5]-1, 99-1), module, TriSEQ3::ROW1_OUTPUT));
-	addOutput(createOutput<PJ301MPort>(Vec(portX[6]-1, 99-1), module, TriSEQ3::ROW2_OUTPUT));
-	addOutput(createOutput<PJ301MPort>(Vec(portX[7]-1, 99-1), module, TriSEQ3::ROW3_OUTPUT));
+	addInput(Port::create<PJ301MPort>(Vec(portX[0]-1, 99-1), Port::INPUT, module, TriSEQ3::CLOCK_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(portX[1]-1, 99-1), Port::INPUT, module, TriSEQ3::EXT_CLOCK_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(portX[2]-1, 99-1), Port::INPUT, module, TriSEQ3::RESET_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(portX[3]-1, 99-1), Port::INPUT, module, TriSEQ3::STEPS_INPUT));
+
+    addOutput(Port::create<PJ301MPort>(Vec(portX[4]-1, 99-1), Port::OUTPUT, module, TriSEQ3::GATES_OUTPUT));
+	addOutput(Port::create<PJ301MPort>(Vec(portX[5]-1, 99-1), Port::OUTPUT, module, TriSEQ3::ROW1_OUTPUT));
+	addOutput(Port::create<PJ301MPort>(Vec(portX[6]-1, 99-1), Port::OUTPUT, module, TriSEQ3::ROW2_OUTPUT));
+	addOutput(Port::create<PJ301MPort>(Vec(portX[7]-1, 99-1), Port::OUTPUT, module, TriSEQ3::ROW3_OUTPUT));
 
 	for (int i = 0; i < 8; i++) {
 		addParam(ParamWidget::create<NKK>(Vec(portX[i]-3, 152), module, TriSEQ3::ROW1_PARAM + i, 0.0, 2.0, 0.0));
@@ -212,6 +209,8 @@ TriSEQ3Widget::TriSEQ3Widget() {
 		addParam(ParamWidget::create<NKK>(Vec(portX[i]-3, 229), module, TriSEQ3::ROW3_PARAM + i, 0.0, 2.0, 0.0));
 		addParam(ParamWidget::create<LEDButton>(Vec(portX[i]+2, 278-1), module, TriSEQ3::GATE_PARAM + i, 0.0, 1.0, 0.0));
 		addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(portX[i]+8, 278+5), module, TriSEQ3::GATE_LIGHTS + i));
-		addOutput(createOutput<PJ301MPort>(Vec(portX[i]-1, 308-1), module, TriSEQ3::GATE_OUTPUT + i));
+		addOutput(Port::create<PJ301MPort>(Vec(portX[i]-1, 308-1), Port::OUTPUT, module, TriSEQ3::GATE_OUTPUT + i));
 	}
 }
+
+Model *modelTriSEQ3 = Model::create<TriSEQ3, TriSEQ3Widget>("dekstop", "TriSEQ3", "Tri SEQ-3", SEQUENCER_TAG);
