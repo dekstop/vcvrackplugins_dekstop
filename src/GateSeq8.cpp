@@ -6,7 +6,7 @@ const int NUM_CHANNELS = 8;
 const int NUM_GATES = NUM_STEPS * NUM_CHANNELS;
 
 struct GateSEQ8 : Module {
-	
+
 	enum ParamIds {
 		CLOCK_PARAM,
 		RUN_PARAM,
@@ -45,9 +45,9 @@ struct GateSEQ8 : Module {
 	float stepLights[NUM_GATES] = {};
 
 	GateSEQ8() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
-	void step();
+	void step() override;
 
-	json_t *toJson() {
+	json_t *toJson() override {
 		json_t *rootJ = json_object();
 
 		// Clock multiplier
@@ -65,7 +65,7 @@ struct GateSEQ8 : Module {
 		return rootJ;
 	}
 
-	void fromJson(json_t *rootJ) {
+	void fromJson(json_t *rootJ) override {
 		// Clock multiplier
 		json_t *multiplierJ = json_object_get(rootJ, "multiplier");
 		if (!multiplierJ) {
@@ -82,15 +82,15 @@ struct GateSEQ8 : Module {
 		}
 	}
 
-	void reset() {
+	void reset() override {
 		for (int i = 0; i < NUM_GATES; i++) {
 			gateState[i] = false;
 		}
 	}
 
-	void randomize() {
+	void randomize() override {
 		for (int i = 0; i < NUM_GATES; i++) {
-			gateState[i] = (random() > 0.5);
+			gateState[i] = (randomUniform() > 0.5);
 		}
 	}
 };
@@ -179,10 +179,10 @@ struct ClockMultiplierChoice : ChoiceButton {
 		menu->box.pos = getAbsoluteOffset(Vec(0, box.size.y));
 		menu->box.size.x = box.size.x;
 
-		const float multipliers[12] = {0.25, 0.3, 0.5, 0.75, 
+		const float multipliers[12] = {0.25, 0.3, 0.5, 0.75,
 																	1.0, 1.5, 2.0, 3.0,
 																	4.0, 6.0, 8.0, 12.0};
-		const std::string labels[12] = {"1/4", "1/3", "1/2", "3/4", 
+		const std::string labels[12] = {"1/4", "1/3", "1/2", "3/4",
 																	 "1/1", "3/2", "2/1", "3/1",
 																 	 "4/1", "6/1", "8/1", "12/1"};
 		int multipliersLen = sizeof(multipliers) / sizeof(multipliers[0]);

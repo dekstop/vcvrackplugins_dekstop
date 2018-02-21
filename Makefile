@@ -4,6 +4,7 @@ VERSION = 0.6.0dev
 RACK_DIR ?= ../..
 
 FLAGS += -Iportaudio
+LDFLAGS += -lsamplerate
 
 SOURCES = $(wildcard src/*.cpp portaudio/*.c)
 
