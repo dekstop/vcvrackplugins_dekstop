@@ -97,9 +97,7 @@ struct GateSEQ8 : Module {
 
 
 void GateSEQ8::step() {
-	#ifdef v_050_dev
 	float gSampleRate = engineGetSampleRate();
-	#endif
 	const float lightLambda = 0.1;
 	// Run
 	if (runningTrigger.process(params[RUN_PARAM].value)) {
@@ -201,9 +199,17 @@ struct ClockMultiplierChoice : ChoiceButton {
 	}
 };
 
-GateSEQ8Widget::GateSEQ8Widget() {
-	GateSEQ8 *module = new GateSEQ8();
-	setModule(module);
+
+struct GateSEQ8Widget : ModuleWidget {
+    GateSEQ8Widget(GateSEQ8 *module);
+
+	// FIXME: why does the widget have a toJson?
+    json_t *toJsonData();
+	void fromJsonData(json_t *root);
+};
+
+// DamianLillardWidget::DamianLillardWidget(DamianLillard *module) : ModuleWidget(module)
+GateSEQ8Widget::GateSEQ8Widget(GateSEQ8 *module) : ModuleWidget(module) {
 	box.size = Vec(360, 380);
 
 	{
@@ -253,3 +259,5 @@ GateSEQ8Widget::GateSEQ8Widget() {
 		addOutput(createOutput<PJ301MPort>(Vec(320, 155+y*25), module, GateSEQ8::GATE1_OUTPUT + y));
 	}
 }
+
+Model *moduleGateSEQ8 = Model::create<GateSEQ8, GateSEQ8Widget>("dekstop", "GateSEQ8", "Gate SEQ-8", SEQUENCER_TAG);

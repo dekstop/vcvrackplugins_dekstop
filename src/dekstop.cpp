@@ -5,10 +5,8 @@ Plugin *plugin;
 
 void init(rack::Plugin *p) {
 	plugin = p;
-	plugin->slug = "dekstop";
-#ifdef VERSION
+	plugin->slug = TOSTRING(SLUG);;
 	p->version = TOSTRING(VERSION);
-#endif
 	p->website = "https://github.com/dekstop/vcvrackplugins_dekstop";
 
 	p->addModel(createModel<TriSEQ3Widget>("dekstop", "TriSEQ3", "Tri-state SEQ-3", SEQUENCER_TAG));

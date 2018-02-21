@@ -15,11 +15,7 @@ struct TriSEQ3Widget : ModuleWidget {
 	void fromJsonData(json_t *root);
 };
 
-struct GateSEQ8Widget : ModuleWidget {
-	GateSEQ8Widget();
-	json_t *toJsonData();
-	void fromJsonData(json_t *root);
-};
+extern Model *modelGateSEQ8;
 
 template <unsigned int ChannelCount>
 struct RecorderWidget : ModuleWidget {
