@@ -213,17 +213,17 @@ GateSEQ8Widget::GateSEQ8Widget() {
 		addChild(panel);
 	}
 
-	addChild(createScrew<ScrewSilver>(Vec(15, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(box.size.x-30, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(15, 365)));
-	addChild(createScrew<ScrewSilver>(Vec(box.size.x-30, 365)));
+	addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
+	addChild(Widget::create<ScrewSilver>(Vec(box.size.x-30, 0)));
+	addChild(Widget::create<ScrewSilver>(Vec(15, 365)));
+	addChild(Widget::create<ScrewSilver>(Vec(box.size.x-30, 365)));
 
-	addParam(createParam<RoundSmallBlackKnob>(Vec(17, 56), module, GateSEQ8::CLOCK_PARAM, -2.0, 10.0, 2.0));
-	addParam(createParam<LEDButton>(Vec(60, 61-1), module, GateSEQ8::RUN_PARAM, 0.0, 1.0, 0.0));
-	addChild(createLight<SmallLight<GreenLight>>(Vec(60+6, 61+5), module, GateSEQ8::RUNNING_LIGHT));
-	addParam(createParam<LEDButton>(Vec(98, 61-1), module, GateSEQ8::RESET_PARAM, 0.0, 1.0, 0.0));
-	addChild(createLight<SmallLight<GreenLight>>(Vec(98+6, 61+5), module, GateSEQ8::RESET_LIGHT));
-	addParam(createParam<RoundSmallBlackSnapKnob>(Vec(132, 56), module, GateSEQ8::STEPS_PARAM, 1.0, NUM_STEPS, NUM_STEPS));
+	addParam(ParamWidget::create<RoundSmallBlackKnob>(Vec(17, 56), module, GateSEQ8::CLOCK_PARAM, -2.0, 10.0, 2.0));
+	addParam(ParamWidget::create<LEDButton>(Vec(60, 61-1), module, GateSEQ8::RUN_PARAM, 0.0, 1.0, 0.0));
+	addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(60+6, 61+5), module, GateSEQ8::RUNNING_LIGHT));
+	addParam(ParamWidget::create<LEDButton>(Vec(98, 61-1), module, GateSEQ8::RESET_PARAM, 0.0, 1.0, 0.0));
+	addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(98+6, 61+5), module, GateSEQ8::RESET_LIGHT));
+	addParam(ParamWidget::create<RoundSmallBlackSnapKnob>(Vec(132, 56), module, GateSEQ8::STEPS_PARAM, 1.0, NUM_STEPS, NUM_STEPS));
 
 	static const float portX[8] = {19, 57, 96, 134, 173, 211, 250, 288};
 	addInput(createInput<PJ301MPort>(Vec(portX[0]-1, 99-1), module, GateSEQ8::CLOCK_INPUT));
@@ -247,8 +247,8 @@ GateSEQ8Widget::GateSEQ8Widget() {
 	for (int y = 0; y < NUM_CHANNELS; y++) {
 		for (int x = 0; x < NUM_STEPS; x++) {
 			int i = y*NUM_STEPS+x;
-			addParam(createParam<LEDButton>(Vec(22 + x*25, 155+y*25+3), module, GateSEQ8::GATE1_PARAM + i, 0.0, 1.0, 0.0));
-			addChild(createLight<SmallLight<GreenLight>>(Vec(28 + x*25, 156+y*25+8), module, GateSEQ8::GATE_LIGHTS + i));
+			addParam(ParamWidget::create<LEDButton>(Vec(22 + x*25, 155+y*25+3), module, GateSEQ8::GATE1_PARAM + i, 0.0, 1.0, 0.0));
+			addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(28 + x*25, 156+y*25+8), module, GateSEQ8::GATE_LIGHTS + i));
 		}
 		addOutput(createOutput<PJ301MPort>(Vec(320, 155+y*25), module, GateSEQ8::GATE1_OUTPUT + y));
 	}

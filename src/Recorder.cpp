@@ -223,7 +223,7 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 
 		xPos = 35;
 		yPos += 2*margin;
-		ParamWidget *recordButton = createParam<RecordButton>(Vec(xPos, yPos-1), module, Recorder<ChannelCount>::RECORD_PARAM, 0.0, 1.0, 0.0);
+		ParamWidget *recordButton = ParamWidget::create<RecordButton>(Vec(xPos, yPos-1), module, Recorder<ChannelCount>::RECORD_PARAM, 0.0, 1.0, 0.0);
 		RecordButton *btn = dynamic_cast<RecordButton*>(recordButton);
 		Recorder<ChannelCount> *recorder = dynamic_cast<Recorder<ChannelCount>*>(module);
 
@@ -236,7 +236,7 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 			}
 		};
 		addParam(recordButton);
-		addChild(createLight<SmallLight<RedLight>>(Vec(xPos+6, yPos+5), module, Recorder<ChannelCount>::RECORDING_LIGHT));
+		addChild(ModuleLightWidget::create<SmallLight<RedLight>>(Vec(xPos+6, yPos+5), module, Recorder<ChannelCount>::RECORDING_LIGHT));
 		xPos = margin;
 		yPos += recordButton->box.size.y + 3*margin;
 	}

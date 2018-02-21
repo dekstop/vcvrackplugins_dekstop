@@ -180,21 +180,21 @@ TriSEQ3Widget::TriSEQ3Widget() {
 		addChild(panel);
 	}
 
-	addChild(createScrew<ScrewSilver>(Vec(15, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(box.size.x-30, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(15, 365)));
-	addChild(createScrew<ScrewSilver>(Vec(box.size.x-30, 365)));
+	addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
+	addChild(Widget::create<ScrewSilver>(Vec(box.size.x-30, 0)));
+	addChild(Widget::create<ScrewSilver>(Vec(15, 365)));
+	addChild(Widget::create<ScrewSilver>(Vec(box.size.x-30, 365)));
 
-	addParam(createParam<RoundSmallBlackKnob>(Vec(17, 56), module, TriSEQ3::CLOCK_PARAM, -2.0, 10.0, 2.0));
-	addParam(createParam<LEDButton>(Vec(60, 61-1), module, TriSEQ3::RUN_PARAM, 0.0, 1.0, 0.0));
-	addChild(createLight<SmallLight<GreenLight>>(Vec(60+6, 61+5), module, TriSEQ3::RUNNING_LIGHT));
-	addParam(createParam<LEDButton>(Vec(98, 61-1), module, TriSEQ3::RESET_PARAM, 0.0, 1.0, 0.0));
-	addChild(createLight<SmallLight<GreenLight>>(Vec(98+6, 61+5), module, TriSEQ3::RESET_LIGHT));
-	addParam(createParam<RoundSmallBlackSnapKnob>(Vec(132, 56), module, TriSEQ3::STEPS_PARAM, 1.0, 8.0, 8.0));
-	addChild(createLight<SmallLight<GreenLight>>(Vec(181.5, 66), module, TriSEQ3::GATES_LIGHT));
-	addChild(createLight<SmallLight<GreenLight>>(Vec(219.5, 66), module, TriSEQ3::ROW_LIGHTS + 0));
-	addChild(createLight<SmallLight<GreenLight>>(Vec(258, 66), module, TriSEQ3::ROW_LIGHTS + 1));
-	addChild(createLight<SmallLight<GreenLight>>(Vec(296.5, 66), module, TriSEQ3::ROW_LIGHTS + 2));
+	addParam(ParamWidget::create<RoundSmallBlackKnob>(Vec(17, 56), module, TriSEQ3::CLOCK_PARAM, -2.0, 10.0, 2.0));
+	addParam(ParamWidget::create<LEDButton>(Vec(60, 61-1), module, TriSEQ3::RUN_PARAM, 0.0, 1.0, 0.0));
+	addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(60+6, 61+5), module, TriSEQ3::RUNNING_LIGHT));
+	addParam(ParamWidget::create<LEDButton>(Vec(98, 61-1), module, TriSEQ3::RESET_PARAM, 0.0, 1.0, 0.0));
+	addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(98+6, 61+5), module, TriSEQ3::RESET_LIGHT));
+	addParam(ParamWidget::create<RoundSmallBlackSnapKnob>(Vec(132, 56), module, TriSEQ3::STEPS_PARAM, 1.0, 8.0, 8.0));
+	addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(181.5, 66), module, TriSEQ3::GATES_LIGHT));
+	addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(219.5, 66), module, TriSEQ3::ROW_LIGHTS + 0));
+	addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(258, 66), module, TriSEQ3::ROW_LIGHTS + 1));
+	addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(296.5, 66), module, TriSEQ3::ROW_LIGHTS + 2));
 
 	static const float portX[8] = {19, 57, 96, 134, 173, 211, 250, 288};
 	addInput(createInput<PJ301MPort>(Vec(portX[0]-1, 99-1), module, TriSEQ3::CLOCK_INPUT));
@@ -207,11 +207,11 @@ TriSEQ3Widget::TriSEQ3Widget() {
 	addOutput(createOutput<PJ301MPort>(Vec(portX[7]-1, 99-1), module, TriSEQ3::ROW3_OUTPUT));
 
 	for (int i = 0; i < 8; i++) {
-		addParam(createParam<NKK>(Vec(portX[i]-3, 152), module, TriSEQ3::ROW1_PARAM + i, 0.0, 2.0, 0.0));
-		addParam(createParam<NKK>(Vec(portX[i]-3, 190), module, TriSEQ3::ROW2_PARAM + i, 0.0, 2.0, 0.0));
-		addParam(createParam<NKK>(Vec(portX[i]-3, 229), module, TriSEQ3::ROW3_PARAM + i, 0.0, 2.0, 0.0));
-		addParam(createParam<LEDButton>(Vec(portX[i]+2, 278-1), module, TriSEQ3::GATE_PARAM + i, 0.0, 1.0, 0.0));
-		addChild(createLight<SmallLight<GreenLight>>(Vec(portX[i]+8, 278+5), module, TriSEQ3::GATE_LIGHTS + i));
+		addParam(ParamWidget::create<NKK>(Vec(portX[i]-3, 152), module, TriSEQ3::ROW1_PARAM + i, 0.0, 2.0, 0.0));
+		addParam(ParamWidget::create<NKK>(Vec(portX[i]-3, 190), module, TriSEQ3::ROW2_PARAM + i, 0.0, 2.0, 0.0));
+		addParam(ParamWidget::create<NKK>(Vec(portX[i]-3, 229), module, TriSEQ3::ROW3_PARAM + i, 0.0, 2.0, 0.0));
+		addParam(ParamWidget::create<LEDButton>(Vec(portX[i]+2, 278-1), module, TriSEQ3::GATE_PARAM + i, 0.0, 1.0, 0.0));
+		addChild(ModuleLightWidget::create<SmallLight<GreenLight>>(Vec(portX[i]+8, 278+5), module, TriSEQ3::GATE_LIGHTS + i));
 		addOutput(createOutput<PJ301MPort>(Vec(portX[i]-1, 308-1), module, TriSEQ3::GATE_OUTPUT + i));
 	}
 }
