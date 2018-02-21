@@ -9,7 +9,6 @@ void init(rack::Plugin *p) {
 	p->version = TOSTRING(VERSION);
 	p->website = "https://github.com/dekstop/vcvrackplugins_dekstop";
 
-	// p->addModel(createModel<GateSEQ8Widget>("dekstop", "GateSEQ8", "Gate SEQ-8", SEQUENCER_TAG));
 	p->addModel(modelGateSEQ8);
 	p->addModel(modelTriSEQ3);
 	p->addModel(modelRecorder2);

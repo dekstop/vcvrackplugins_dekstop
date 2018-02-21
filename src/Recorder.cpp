@@ -30,7 +30,7 @@ struct Recorder : Module {
 		RECORDING_LIGHT,
 		NUM_LIGHTS
 	};
-	
+
 	std::string filename;
 	WAV_Writer writer;
 	std::atomic_bool isRecording;
@@ -45,7 +45,7 @@ struct Recorder : Module {
 		isRecording = false;
 	}
 	~Recorder();
-	void step();
+	void step() override;
 	void clear();
 	void startRecording();
 	void stopRecording();
@@ -106,7 +106,7 @@ void Recorder<ChannelCount>::openWAV() {
 			snprintf(msg, sizeof(msg), "Failed to open WAV file, result = %d\n", result);
 			osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, msg);
 			fprintf(stderr, "%s", msg);
-		} 
+		}
 	}
 }
 
@@ -180,7 +180,7 @@ struct RecordButton : LEDButton {
 
 	Callback onPressCallback;
 	SchmittTrigger recordTrigger;
-	
+
 	void onChange(EventChange &e) override {
 		if (recordTrigger.process(value)) {
 			onPress(e);
@@ -194,16 +194,14 @@ struct RecordButton : LEDButton {
 
 template <unsigned int ChannelCount>
 struct RecorderWidget : ModuleWidget {
-	RecorderWidget();
+	RecorderWidget(Recorder<ChannelCount> *module);
 	json_t *toJsonData();
 	void fromJsonData(json_t *root);
 };
 
 
 template <unsigned int ChannelCount>
-RecorderWidget<ChannelCount>::RecorderWidget() {
-	Recorder<ChannelCount> *module = new Recorder<ChannelCount>();
-	setModule(module);
+RecorderWidget<ChannelCount>::RecorderWidget(Recorder<ChannelCount> *module) : ModuleWidget(module) {
 	box.size = Vec(15*6+5, 380);
 
 	{
@@ -270,5 +268,5 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 	}
 }
 
-Model *modelRecord2 = Model::create<Recorder2, Recorder2Widget>("dekstop", "Recorder2", "Recorder 2", UTILITY_TAG);
-Model *modelRecord8 = Model::create<Recorder8, Recorder8Widget>("dekstop", "Recorder8", "Recorder 8", UTILITY_TAG);
+Model *modelRecorder2 = Model::create<Recorder<2>, RecorderWidget<2>>("dekstop", "Recorder2", "Recorder 2", UTILITY_TAG);
+Model *modelRecorder8 = Model::create<Recorder<8>, RecorderWidget<8>>("dekstop", "Recorder8", "Recorder 8", UTILITY_TAG);

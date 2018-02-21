@@ -48,9 +48,9 @@ struct TriSEQ3 : Module {
 	float stepLights[8] = {};
 
 	TriSEQ3() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
-	void step();
+	void step() override;
 
-	json_t *toJson() {
+	json_t *toJson() override {
 		json_t *rootJ = json_object();
 
 		json_t *gatesJ = json_array();
@@ -63,7 +63,7 @@ struct TriSEQ3 : Module {
 		return rootJ;
 	}
 
-	void fromJson(json_t *rootJ) {
+	void fromJson(json_t *rootJ) override {
 		json_t *gatesJ = json_object_get(rootJ, "gates");
 		for (int i = 0; i < 8; i++) {
 			json_t *gateJ = json_array_get(gatesJ, i);
@@ -71,15 +71,15 @@ struct TriSEQ3 : Module {
 		}
 	}
 
-	void reset() {
+	void reset() override {
 		for (int i = 0; i < 8; i++) {
 			gateState[i] = false;
 		}
 	}
 
-	void randomize() {
+	void randomize() override {
 		for (int i = 0; i < 8; i++) {
-			gateState[i] = (random() > 0.5);
+			gateState[i] = (randomUniform() > 0.5);
 		}
 	}
 };
