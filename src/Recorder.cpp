@@ -30,7 +30,7 @@ struct Recorder : Module {
 		RECORDING_LIGHT,
 		NUM_LIGHTS
 	};
-	
+
 	std::string filename;
 	WAV_Writer writer;
 	std::atomic_bool isRecording;
@@ -45,7 +45,7 @@ struct Recorder : Module {
 		isRecording = false;
 	}
 	~Recorder();
-	void step();
+	void step() override;
 	void clear();
 	void startRecording();
 	void stopRecording();
@@ -96,9 +96,7 @@ void Recorder<ChannelCount>::saveAsDialog() {
 
 template <unsigned int ChannelCount>
 void Recorder<ChannelCount>::openWAV() {
-	#ifdef v_050_dev
 	float gSampleRate = engineGetSampleRate();
-	#endif
 	if (!filename.empty()) {
 		fprintf(stdout, "Recording to %s\n", filename.c_str());
 		int result = Audio_WAV_OpenWriter(&writer, filename.c_str(), gSampleRate, ChannelCount);
@@ -108,7 +106,7 @@ void Recorder<ChannelCount>::openWAV() {
 			snprintf(msg, sizeof(msg), "Failed to open WAV file, result = %d\n", result);
 			osdialog_message(OSDIALOG_ERROR, OSDIALOG_OK, msg);
 			fprintf(stderr, "%s", msg);
-		} 
+		}
 	}
 }
 
@@ -128,9 +126,7 @@ void Recorder<ChannelCount>::closeWAV() {
 // Run in a separate thread
 template <unsigned int ChannelCount>
 void Recorder<ChannelCount>::recorderRun() {
-	#ifdef v_050_dev
 	float gSampleRate = engineGetSampleRate();
-	#endif
 	while (isRecording) {
 		// Wake up a few times a second, often enough to never overflow the buffer.
 		float sleepTime = (1.0 * BUFFERSIZE / gSampleRate) / 2.0;
@@ -184,7 +180,7 @@ struct RecordButton : LEDButton {
 
 	Callback onPressCallback;
 	SchmittTrigger recordTrigger;
-	
+
 	void onChange(EventChange &e) override {
 		if (recordTrigger.process(value)) {
 			onPress(e);
@@ -196,11 +192,16 @@ struct RecordButton : LEDButton {
 	}
 };
 
+template <unsigned int ChannelCount>
+struct RecorderWidget : ModuleWidget {
+	RecorderWidget(Recorder<ChannelCount> *module);
+	json_t *toJsonData();
+	void fromJsonData(json_t *root);
+};
+
 
 template <unsigned int ChannelCount>
-RecorderWidget<ChannelCount>::RecorderWidget() {
-	Recorder<ChannelCount> *module = new Recorder<ChannelCount>();
-	setModule(module);
+RecorderWidget<ChannelCount>::RecorderWidget(Recorder<ChannelCount> *module) : ModuleWidget(module) {
 	box.size = Vec(15*6+5, 380);
 
 	{
@@ -223,7 +224,7 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 
 		xPos = 35;
 		yPos += 2*margin;
-		ParamWidget *recordButton = createParam<RecordButton>(Vec(xPos, yPos-1), module, Recorder<ChannelCount>::RECORD_PARAM, 0.0, 1.0, 0.0);
+		ParamWidget *recordButton = ParamWidget::create<RecordButton>(Vec(xPos, yPos-1), module, Recorder<ChannelCount>::RECORD_PARAM, 0.0, 1.0, 0.0);
 		RecordButton *btn = dynamic_cast<RecordButton*>(recordButton);
 		Recorder<ChannelCount> *recorder = dynamic_cast<Recorder<ChannelCount>*>(module);
 
@@ -236,7 +237,7 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 			}
 		};
 		addParam(recordButton);
-		addChild(createLight<SmallLight<RedLight>>(Vec(xPos+6, yPos+5), module, Recorder<ChannelCount>::RECORDING_LIGHT));
+		addChild(ModuleLightWidget::create<SmallLight<RedLight>>(Vec(xPos+6, yPos+5), module, Recorder<ChannelCount>::RECORDING_LIGHT));
 		xPos = margin;
 		yPos += recordButton->box.size.y + 3*margin;
 	}
@@ -252,7 +253,7 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 	yPos += 5;
 	xPos = 10;
 	for (unsigned int i = 0; i < ChannelCount; i++) {
-		addInput(createInput<PJ3410Port>(Vec(xPos, yPos), module, i));
+		addInput(Port::create<PJ3410Port>(Vec(xPos, yPos), Port::INPUT, module, i));
 		Label *label = new Label();
 		label->box.pos = Vec(xPos + 4, yPos + 28);
 		label->text = stringf("%d", i + 1);
@@ -267,12 +268,5 @@ RecorderWidget<ChannelCount>::RecorderWidget() {
 	}
 }
 
-Recorder2Widget::Recorder2Widget() :
-	RecorderWidget<2u>()
-{
-}
-
-Recorder8Widget::Recorder8Widget() :
-	RecorderWidget<8u>()
-{
-}
+Model *modelRecorder2 = Model::create<Recorder<2>, RecorderWidget<2>>("dekstop", "Recorder2", "Recorder 2", UTILITY_TAG);
+Model *modelRecorder8 = Model::create<Recorder<8>, RecorderWidget<8>>("dekstop", "Recorder8", "Recorder 8", UTILITY_TAG);

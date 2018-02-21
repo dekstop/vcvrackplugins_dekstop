@@ -1,18 +1,14 @@
-# this flag selects the rack version to compile against.
-# 
-# possible values are v040 v_050_dev
+SLUG = dekstop
+VERSION = 0.6.0dev
 
-# FLAGS += -D v040
-FLAGS += -D v_050_dev
+RACK_DIR ?= ../..
+
+FLAGS += -Iportaudio
+LDFLAGS += -lsamplerate
 
 SOURCES = $(wildcard src/*.cpp portaudio/*.c)
 
-include ../../plugin.mk
+include $(RACK_DIR)/plugin.mk
 
-FLAGS += -Iportaudio
+DISTRIBUTABLES += $(wildcard LICENSE*) res
 
-dist: all
-	mkdir -p dist/dekstop
-	cp LICENSE* dist/dekstop/
-	cp plugin.* dist/dekstop/
-	cp -R res dist/dekstop/
